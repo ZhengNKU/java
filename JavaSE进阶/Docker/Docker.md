@@ -35,7 +35,7 @@ Docker/Server接收到Docker-Client的指令，就会执行这个命令。
 2. Docker利用的是宿主机的内核，虚拟机需要是Guest OS。所以，新建一个容器的时候，Docker不需要像虚拟机一样重新加载一个操作系统内核，避免引导。虚拟机是加载Guest OS，分钟级别的，而Docker是利用宿主机的操作系统，省略了这个复杂的过程，秒级别。
 
 # 基本命令
-
+注：可选项可以任意组合。
 ## 帮助命令
 
 ```shell
@@ -92,6 +92,89 @@ docker rmi -f $(docker images -aq) # 删除所有镜像
 
 ## 容器基本命令
 
+我们有了镜像才可以创建容器。
 ```shell
-
+docker run [可选项] image # 新建容器并启动
 ```
+```shell
+# 可选项
+--name="Name"  # 容器名称 
+-d             # 后台方式运行
+-it            # 交互方式运行，进入容器查看内容
+-p             # 指定容器端口 -p 8080:8080
+    -p ip:主机端口:容器端口
+    -p 主机端口:容器端口（常用）
+    -p 容器端口
+    容器端口
+-P             # 随机指定端口
+```
+![img_7.png](./img_7.png)
+```shell
+exit           # 容器停止并退出，从容器退回主机
+Ctrl+P+Q       # 容器不停止退出
+```
+```shell
+docker ps [可选项]  # 列出所有正在运行的容器
+```
+```shell
+# 可选项
+-a             # 列出曾经运行过的容器和现在正在运行的所有容器
+-n=[number]    # 显示最近创建的容器,number表示个数
+-q             # 只显示容器的编号
+```
+```shell
+docker rm 容器id # 删除容器，不能删除正在运行的容器
+docker rm -f 容器id # 强制删除容器
+docker rm -f $(docker images -aq) # 删除所有容器
+docker ps -a -q|xargs docker rm # 删除所有容器
+```
+```shell
+docker start 容器id   # 启动容器
+docker restart 容器id # 重启容器
+docker stop 容器id    # 停止当前正在运行的容器
+docker kill 容器id    # 强制停止当前正在运行的容器
+```
+## 常用其他命令
+问题：后台运行容器时（run -d），通过ps发现容器停止了。
+原因：docker容器后台运行时，必须有一个前台进程。docker没有发现提供服务，会自动停止，就是没有程序了。
+
+```shell
+docker logs -f -t --tail 容器id # 查看全部日志
+docker logs -tf --tail number 容器id # number表示条数
+```
+如果没有日志，自己写一段shell脚本
+```shell
+while ture;do echo kuangshen;sleep 1;done
+docker run -d centos/bin/sh -c "while ture;do echo kuangshen;sleep 1;done"
+```
+```shell
+docker top 容器id # 查看容器进程信息
+```
+```shell
+docker inspect 容器/镜像id # 查看容器/镜像信息
+```
+![img_8.png](./img_8.png)
+
+**进入正在运行的容器**
+
+我们通常容器都是使用后台方式运行的，需要进入容器，修改一些配置
+```shell
+docker exec -it 容器id /bin/bash   # 方式1，进入容器后开启一个新的终端，可以在里面操作
+docker attach -it 容器id           # 方式2，进入容器正在执行的终端，不会启动新的进程
+```
+```shell
+docker cp 容器id:容器内路径 主机目标路径 # 容器内拷贝到主机上
+# 步骤
+docker attach -it 容器id 
+cd /home
+touch test.java
+ls
+exit
+docker cp 容器id:/home/test.java /home
+ls
+```
+![img_9.png](./img_9.png)
+
+拷贝是一个手动过程，未来我们使用-v卷的技术，可以实现。
+
+
